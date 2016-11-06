@@ -18,7 +18,11 @@ public class OSSimulator {
     }
 
     public static void main(String[] args) {
-
+        //load program
+        
+        //get timer
+        
+        //start
     }
 
     /**
@@ -28,7 +32,9 @@ public class OSSimulator {
      * @param timer value for timer interrupt.
      */
     public void start(int[] memory, int timer) {
-
+        //set memory by cpu.initialize
+        
+        //call cpu.run
     }
 
     /**
@@ -41,6 +47,18 @@ public class OSSimulator {
      * @throws IOException IO Exception
      */
     private static int[] loadProgram(String fileName) throws FileNotFoundException, SecurityException, IOException {
-        throw new UnsupportedOperationException();
+        int[] memory = new int[Utils.MEMORY_SIZE];
+        //create new file following fileName
+        //create a array for memory
+        
+        //read line
+            //if not empty line
+                //slip line to get first element
+                //
+                //check first character of element
+                    //if '.' then read loader to change the load address
+                    //else paser to int and store to array
+                    
+        return memory;
     }
 }

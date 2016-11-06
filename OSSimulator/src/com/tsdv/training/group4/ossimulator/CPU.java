@@ -1,7 +1,7 @@
 package com.tsdv.training.group4.ossimulator;
 
 /**
- *
+ * CPU process
  */
 public class CPU {
     /**
@@ -29,9 +29,13 @@ public class CPU {
      */
     private int regY;
     /**
-     * Timer Interrupt
+     * number of instruction for a timer.
      */
-    private Interrupt timerInterrupt;
+    private int timer;
+    /**
+     * flag for interrupt processing
+     */
+    private boolean isInterrupt;
     /**
      * Memory of OS
      */
@@ -81,10 +85,9 @@ public class CPU {
     }
 
     /**
-     * function set Timer Interrupt
-     * @param value Timer interrupt value
+     * function interrupt processing
      */
-    public void setTimer(int value) {
+    public void interrupt() {
         throw new UnsupportedOperationException();
     }
 }

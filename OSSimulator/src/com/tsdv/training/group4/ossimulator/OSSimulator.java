@@ -1,7 +1,13 @@
 package com.tsdv.training.group4.ossimulator;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.Scanner;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Entry point of OS Simulator.
@@ -18,11 +24,17 @@ public class OSSimulator {
     }
 
     public static void main(String[] args) {
-        //load program
-        
-        //get timer
-        
-        //start
+        try {
+            //load program
+            int[] memory = loadProgram("program1.txt");
+            //get timer
+            
+            //start
+        } catch (SecurityException ex) {
+            Logger.getLogger(OSSimulator.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
+            Logger.getLogger(OSSimulator.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     /**
@@ -47,17 +59,34 @@ public class OSSimulator {
      * @throws IOException IO Exception
      */
     private static int[] loadProgram(String fileName) throws FileNotFoundException, SecurityException, IOException {
-        int[] memory = new int[Utils.MEMORY_SIZE];
         //create new file following fileName
+        File file = new File(fileName);
+        Scanner scanner = new Scanner(file);
         //create a array for memory
+        int[] memory = new int[Utils.MEMORY_SIZE];
         
-        //read line
-            //if not empty line
-                //slip line to get first element
-                //
-                //check first character of element
-                    //if '.' then read loader to change the load address
-                    //else paser to int and store to array
+        Pattern patternInstruction = Pattern.compile("^([0-9]+)");
+        Pattern patternPeriod = Pattern.compile("^.([0-9]+)");
+        int address = 0;
+        
+        while(scanner.hasNext()){
+            //read line
+            String line = scanner.nextLine();
+            
+            //check instruction
+            Matcher matcherInstruction = patternInstruction.matcher(line);
+            if(matcherInstruction.find()){
+                String instruction = matcherInstruction.group(0);
+                memory[address++] = Integer.parseInt(instruction);
+            }else{
+            //check period
+                Matcher matcherPeriod = patternPeriod.matcher(line);
+                if(matcherPeriod.find()){
+                    String jumAddress = matcherPeriod.group(1);
+                    address = Integer.parseInt(jumAddress);
+                }
+            }
+        }
                     
         return memory;
     }

@@ -1,0 +1,43 @@
+This program calculate a sum from 1 to 10, then print the sum
+Also it registers a timer handler at address 1000
+Each time a ticktock happens, it prints a dot
+
+/* sum = 0 */
+1, 
+0,        // load 0 to AC
+27,       // push AC to stack (sum = 0)
+14,       // copy AC to X
+
+/* for i = 1 to */
+25,       // X++
+28,       // pop sum to AC
+10,       // add X to AC (sum)
+27,       // store sum to stack
+
+/* if i = 10 break */
+1, 
+10,       // load 10 to AC
+12,       // subtract x from AC
+22, 
+4,        // AC != 0 means i < 10, go back to loop
+
+/* loop finished, print the sum */
+28,       // load sum to AC
+9, 
+1,        // print sum
+1, 
+10,
+9, 
+2,        // print new line
+50        // END
+
+
+/* This is timer handler  */
+.1000     // timer handler, print a dot (.) at each ticktock
+1,        // LOAD  
+46,       // the dot
+9,        // print the dot
+2,
+30        // get out of interrupt
+
+

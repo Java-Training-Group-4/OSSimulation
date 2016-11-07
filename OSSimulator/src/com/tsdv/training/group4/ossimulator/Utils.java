@@ -29,4 +29,9 @@ public class Utils {
      * Start address of system interrupt.
      */
     public static int SYSTEM_INTERRUPT_ADDR = 1500;
+    
+    /**
+     * de
+     */
+    public static final String NAME_DELIMITER = " ";
 }

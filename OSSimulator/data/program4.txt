@@ -1,0 +1,10 @@
+This program is to test 'index out of range' interrupt
+It will try to write to an address that is not in memory range
+
+1,   // load
+100, // 100 to AC
+            
+7,   // store AC
+-1   // to address -1 => interrupt, print "Index out of range" message
+
+// Remember the message is printed using instructions, not System.out.println

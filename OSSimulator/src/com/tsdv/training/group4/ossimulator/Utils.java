@@ -39,4 +39,14 @@ public class Utils {
   public static String PERIOD_PATTERN = "^\\.[0-9]+";
 
   public static String TIMER_SIGN = ".";
+
+  /**
+   * Start point index of User stack
+   */
+  public static int START_USER_STACK_INDEX = 999;
+
+  /**
+   * Start point index of System stack
+   */
+  public static int START_SYSTEM_STACK_INDEX = 1999;
 }

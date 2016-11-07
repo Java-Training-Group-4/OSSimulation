@@ -39,10 +39,26 @@ public class CPU {
    * flag for interrupt processing
    */
   private boolean isInterrupt;
+
+  /**
+   * flag for ending program
+   */
+  private boolean isTerminate;
+
   /**
    * Memory of OS
    */
   private Memory memory;
+
+  /**
+   * User stack point index for User stack
+   */
+  private int userSP;
+
+  /**
+   * System stack point index for System stack
+   */
+  private int systemSP;
 
   /**
    * Constructor function
@@ -56,6 +72,8 @@ public class CPU {
     this.regSP = 0;
     this.regX = 0;
     this.regY = 0;
+    this.userSP = Utils.START_USER_STACK_INDEX;
+    this.systemSP = Utils.START_SYSTEM_STACK_INDEX;
   }
 
   /**
@@ -63,15 +81,23 @@ public class CPU {
    */
   public void run() {
     // declare 'count' variable store number of instruction is executed
-
+    int count = 0;
     // loop instructions from user memory
-    // load instruction by using fetchIR() function
-    // increase value of PC register by 1 unit
-    // execute instruction
-    /**
-     * check count == timer If yes, switch mode to SYSTEM_MODE, set isInterrupt = true and call
-     * interrupt() function
-     */
+    while (!isTerminate) {
+      // load instruction by using fetchIR() function
+      fetchIR();
+      count++;
+      // execute instruction
+      executeInstruction();
+      /**
+       * check count == timer If yes, switch mode to SYSTEM_MODE, set isInterrupt = true and call
+       * interrupt() function
+       */
+      if (count == this.timer) {
+        interrupt();
+        count = 0;
+      }
+    }
   }
 
   /**
@@ -81,6 +107,7 @@ public class CPU {
    */
   public void initialize(int[] mem) {
     // call initialize() function of memory
+    this.memory.initialize(mem);
   }
 
   /**
@@ -90,18 +117,22 @@ public class CPU {
     /**
      * check mode == USER_MODE switch to SYSTEM_MODE or reverse
      */
+    if (this.memory.getMode() == Utils.USER_MODE) {
+      this.memory.setMode(Utils.SYSTEM_MODE);
+    } else if (this.memory.getMode() == Utils.SYSTEM_MODE) {
+      this.memory.setMode(Utils.USER_MODE);
+    }
   }
 
   /**
    *
-   * @return Instruction code
+   * function fetch instruction into register IR
    */
-  public int fetchIR() {
+  public void fetchIR() {
     /**
      * get instruction from User memory with PC index
      */
-
-    return 0;
+    this.regIR = this.memory.read(this.regPC++);
   }
 
   /**
@@ -111,17 +142,123 @@ public class CPU {
     /**
      * switch case: call corresponding function
      */
+    switch (this.regIR) {
+      case Instruction.LOAD_VALUE:
+        loadValue();
+        break;
+      case Instruction.LOAD_ADDRESS:
+        loadAddr();
+        break;
+      case Instruction.LOAD_IND_ADDRESS:
+        loadIndAddr();
+        break;
+      case Instruction.LOAD_IDX_X_ADDRESS:
+        loadIdxXAddr();
+        break;
+      case Instruction.LOAD_IDX_Y_ADDRESS:
+        loadIdxYAddr();
+        break;
+      case Instruction.LOAD_SP_X:
+        loadSpX();
+        break;
+      case Instruction.STORE_ADDRESS:
+        storeAddr();
+        break;
+      case Instruction.GET:
+        get();
+        break;
+      case Instruction.PUT_PORT:
+        put();
+        break;
+      case Instruction.ADD_X:
+        addX();
+        break;
+      case Instruction.ADD_Y:
+        addY();
+        break;
+      case Instruction.SUB_X:
+        subX();
+        break;
+      case Instruction.SUB_Y:
+        subY();
+        break;
+      case Instruction.COPY_TO_X:
+        copyToX();
+        break;
+      case Instruction.COPY_FROM_X:
+        copyFromX();
+        break;
+      case Instruction.COPY_TO_Y:
+        copyToY();
+        break;
+      case Instruction.COPY_FROM_Y:
+        copyFromY();
+        break;
+      case Instruction.COPY_FROM_SP:
+        copyFromSp();
+        break;
+      case Instruction.COPY_TO_SP:
+        copyToSp();
+        break;
+      case Instruction.JUMP_ADDRESS:
+        jumpAddress();
+        break;
+      case Instruction.JUMP_IF_EQUAL:
+        jumpIfEquealAddr();
+        break;
+      case Instruction.JUMP_IF_NOT_EQUAL:
+        jumpIfNotEquealAddr();
+        break;
+      case Instruction.CALL_ADDRESS:
+        callAddr();
+        break;
+      case Instruction.RET:
+        ret();
+      case Instruction.INC_X:
+        incX();
+        break;
+      case Instruction.DEC_X:
+        decX();
+        break;
+      case Instruction.PUSH:
+        push();
+        break;
+      case Instruction.POP:
+        pop();
+        break;
+      case Instruction.INT:
+        intSystem();
+        break;
+      case Instruction.IRET:
+        iret();
+        break;
+      case Instruction.END:
+        end();
+        break;
+      default:
+        break;
+    }
   }
 
   /**
    * function interrupt processing
    */
   public void interrupt() {
-    //enable isInterrupt
-    //store cp,sp to user stack
-    //assign cp = 1000
-    //get sp from system stack
-    //set system mode
+    // check other interrupt is enabled
+    if (!this.isInterrupt) {
+      // set isInterrupt = true
+      this.isInterrupt = true;
+      //set system mode
+      switchMode();
+      // switch stack
+      this.userSP = this.regSP;
+      //store PC,SP to system stack
+      this.memory.write(this.systemSP, this.regPC);
+      this.systemSP--;
+      this.memory.write(this.systemSP, this.regSP);
+      //assign PC = 1000
+      this.regPC = Utils.TIMER_INTERRUPT_ADDR;
+    }
   }
 
   /**
@@ -378,27 +515,33 @@ public class CPU {
    * 29. Set system mode, switch stack, push SP and PC, set new SP and PC
    */
   private void intSystem() {
-    //set system mode
-    switchMode();
-    //save tmpSP = sp, tmpPC = pc
-    int tmpSp = regSP;
-    int tmpPc = regPC;
-    //switch stack
-    //set new sp, pc
-    regPC = Utils.SYSTEM_INTERRUPT_ADDR;
-    regSP = Utils.MEMORY_SIZE - 1;
-    //push tmpSP, tmpPC to system stack
-    memory.write(regSP--, tmpSp);
-    memory.write(regSP--, tmpPc);
+    if (!this.isInterrupt) {
+      // set isInterrupt = true
+      this.isInterrupt = true;
+      //set system mode
+      switchMode();
+      //switch stack
+      this.userSP = this.regSP;
+      //push tmpSP, tmpPC to system stack
+      memory.write(this.systemSP--, this.regSP);
+      memory.write(this.systemSP--, this.regPC);
+      //set new sp, pc
+      regPC = Utils.SYSTEM_INTERRUPT_ADDR;
+      regSP = this.systemSP;
+    }
   }
 
   /**
    * 30. Restore registers, set user mode
    */
   private void iret() {
+    // set isInterrupt = false
+    this.isInterrupt = false;
+    //switch stack
+    this.systemSP = this.regSP;
     //pop from stack into sp, pc
-    regPC = memory.read(regSP++);
-    regSP = memory.read(regSP);
+    regPC = memory.read(this.systemSP++);
+    regSP = memory.read(this.systemSP++);
     //set user mode
     switchMode();
   }
@@ -407,7 +550,7 @@ public class CPU {
    * 50. End execution
    */
   private void end() {
-
+    this.isTerminate = true;
   }
 
   /**

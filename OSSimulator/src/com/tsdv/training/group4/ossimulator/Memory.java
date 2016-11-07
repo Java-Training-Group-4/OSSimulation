@@ -51,7 +51,7 @@ public class Memory {
    */
   public int read(int address) {
     if (address < 0 || address >= Utils.MEMORY_SIZE) {
-      throw new IndexOutOfBoundsException();
+      throw new IndexOutOfBoundsException("Out of index: " + address);
     }
     if (mode == Utils.USER_MODE && address > Utils.USER_MEMORY_INDEX) {
       throw new IllegalAccessError();
@@ -67,7 +67,7 @@ public class Memory {
    */
   public void write(int address, int data) {
     if (address < 0 || address >= Utils.MEMORY_SIZE) {
-      throw new IndexOutOfBoundsException();
+      throw new IndexOutOfBoundsException("Out of index: " + address);
     }
     if (mode == Utils.USER_MODE && address > Utils.USER_MEMORY_INDEX) {
       throw new IllegalAccessError();

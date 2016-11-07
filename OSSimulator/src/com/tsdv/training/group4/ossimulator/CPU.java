@@ -1,5 +1,7 @@
 package com.tsdv.training.group4.ossimulator;
 
+import java.util.Random;
+
 /**
  * CPU process
  */
@@ -209,9 +211,27 @@ public class CPU {
   }
 
   /**
-   * 51. End execution
+   * 50. End execution
    */
   private void end() {
 
+  }
+
+  /**
+   * Print number to screen.
+   *
+   * @param data number
+   */
+  private void printNumber(int data) {
+    System.out.println(data);
+  }
+
+  /**
+   * Print character from number code.
+   *
+   * @param data number
+   */
+  private void printCharacter(int data) {
+    System.out.println(Character.toChars(data));
   }
 }

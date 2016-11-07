@@ -23,17 +23,19 @@ public class OSSimulator {
 
   public static void main(String[] args) {
     try {
-      verifyInputParameters(args);
+//      verifyInputParameters(args);
       // Get parameters
-      String programFile = args[0];
+//      String programFile = args[0];
+      String programFile = "data/program5.txt";
       //load program
       int[] memory = loadProgram(programFile);
       // Get timer
-      int timer = Integer.valueOf(args[1]);
+//      int timer = Integer.valueOf(args[1]);
+      int timer = 5;
       //start
       OSSimulator simulator = new OSSimulator();
       simulator.start(memory, timer);
-      
+
     } catch (NumberFormatException ex) {
       throw new IllegalArgumentException("Timer value should be positive integer and greater than 0.");
     } catch (IllegalArgumentException ex) {

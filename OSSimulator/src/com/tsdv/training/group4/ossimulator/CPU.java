@@ -69,7 +69,7 @@ public class CPU {
     this.regAC = 0;
     this.regIR = 0;
     this.regPC = 0;
-    this.regSP = 0;
+    this.regSP = Utils.START_USER_STACK_INDEX;
     this.regX = 0;
     this.regY = 0;
     this.userSP = Utils.START_USER_STACK_INDEX;
@@ -86,7 +86,9 @@ public class CPU {
     while (!isTerminate) {
       // load instruction by using fetchIR() function
       fetchIR();
-      count++;
+      if (!isInterrupt) {
+        count++;
+      }
       // execute instruction
       executeInstruction();
       /**
@@ -142,101 +144,111 @@ public class CPU {
     /**
      * switch case: call corresponding function
      */
-    switch (this.regIR) {
-      case Instruction.LOAD_VALUE:
-        loadValue();
-        break;
-      case Instruction.LOAD_ADDRESS:
-        loadAddr();
-        break;
-      case Instruction.LOAD_IND_ADDRESS:
-        loadIndAddr();
-        break;
-      case Instruction.LOAD_IDX_X_ADDRESS:
-        loadIdxXAddr();
-        break;
-      case Instruction.LOAD_IDX_Y_ADDRESS:
-        loadIdxYAddr();
-        break;
-      case Instruction.LOAD_SP_X:
-        loadSpX();
-        break;
-      case Instruction.STORE_ADDRESS:
-        storeAddr();
-        break;
-      case Instruction.GET:
-        get();
-        break;
-      case Instruction.PUT_PORT:
-        put();
-        break;
-      case Instruction.ADD_X:
-        addX();
-        break;
-      case Instruction.ADD_Y:
-        addY();
-        break;
-      case Instruction.SUB_X:
-        subX();
-        break;
-      case Instruction.SUB_Y:
-        subY();
-        break;
-      case Instruction.COPY_TO_X:
-        copyToX();
-        break;
-      case Instruction.COPY_FROM_X:
-        copyFromX();
-        break;
-      case Instruction.COPY_TO_Y:
-        copyToY();
-        break;
-      case Instruction.COPY_FROM_Y:
-        copyFromY();
-        break;
-      case Instruction.COPY_FROM_SP:
-        copyFromSp();
-        break;
-      case Instruction.COPY_TO_SP:
-        copyToSp();
-        break;
-      case Instruction.JUMP_ADDRESS:
-        jumpAddress();
-        break;
-      case Instruction.JUMP_IF_EQUAL:
-        jumpIfEquealAddr();
-        break;
-      case Instruction.JUMP_IF_NOT_EQUAL:
-        jumpIfNotEquealAddr();
-        break;
-      case Instruction.CALL_ADDRESS:
-        callAddr();
-        break;
-      case Instruction.RET:
-        ret();
-      case Instruction.INC_X:
-        incX();
-        break;
-      case Instruction.DEC_X:
-        decX();
-        break;
-      case Instruction.PUSH:
-        push();
-        break;
-      case Instruction.POP:
-        pop();
-        break;
-      case Instruction.INT:
-        intSystem();
-        break;
-      case Instruction.IRET:
-        iret();
-        break;
-      case Instruction.END:
-        end();
-        break;
-      default:
-        break;
+    try {
+      switch (this.regIR) {
+        case Instruction.LOAD_VALUE:
+          loadValue();
+          break;
+        case Instruction.LOAD_ADDRESS:
+          loadAddr();
+          break;
+        case Instruction.LOAD_IND_ADDRESS:
+          loadIndAddr();
+          break;
+        case Instruction.LOAD_IDX_X_ADDRESS:
+          loadIdxXAddr();
+          break;
+        case Instruction.LOAD_IDX_Y_ADDRESS:
+          loadIdxYAddr();
+          break;
+        case Instruction.LOAD_SP_X:
+          loadSpX();
+          break;
+        case Instruction.STORE_ADDRESS:
+          storeAddr();
+          break;
+        case Instruction.GET:
+          get();
+          break;
+        case Instruction.PUT_PORT:
+          put();
+          break;
+        case Instruction.ADD_X:
+          addX();
+          break;
+        case Instruction.ADD_Y:
+          addY();
+          break;
+        case Instruction.SUB_X:
+          subX();
+          break;
+        case Instruction.SUB_Y:
+          subY();
+          break;
+        case Instruction.COPY_TO_X:
+          copyToX();
+          break;
+        case Instruction.COPY_FROM_X:
+          copyFromX();
+          break;
+        case Instruction.COPY_TO_Y:
+          copyToY();
+          break;
+        case Instruction.COPY_FROM_Y:
+          copyFromY();
+          break;
+        case Instruction.COPY_FROM_SP:
+          copyFromSp();
+          break;
+        case Instruction.COPY_TO_SP:
+          copyToSp();
+          break;
+        case Instruction.JUMP_ADDRESS:
+          jumpAddress();
+          break;
+        case Instruction.JUMP_IF_EQUAL:
+          jumpIfEquealAddr();
+          break;
+        case Instruction.JUMP_IF_NOT_EQUAL:
+          jumpIfNotEquealAddr();
+          break;
+        case Instruction.CALL_ADDRESS:
+          callAddr();
+          break;
+        case Instruction.RET:
+          ret();
+        case Instruction.INC_X:
+          incX();
+          break;
+        case Instruction.DEC_X:
+          decX();
+          break;
+        case Instruction.PUSH:
+          push();
+          break;
+        case Instruction.POP:
+          pop();
+          break;
+        case Instruction.INT:
+          intSystem();
+          break;
+        case Instruction.IRET:
+          iret();
+          break;
+        case Instruction.END:
+          end();
+          break;
+        default:
+          break;
+      }
+    } catch (IllegalAccessError ex) {
+      //print "Invalid access to memory"
+      printErrorIllegalAccess();
+      end();
+    } catch (IndexOutOfBoundsException ex) {
+      //print "Index out of range"
+      printErrorIndexOutOfRange();
+      end();
     }
   }
 
@@ -244,6 +256,7 @@ public class CPU {
    * function interrupt processing
    */
   public void interrupt() {
+
     // check other interrupt is enabled
     if (!this.isInterrupt) {
       // set isInterrupt = true
@@ -253,11 +266,19 @@ public class CPU {
       // switch stack
       this.userSP = this.regSP;
       //store PC,SP to system stack
-      this.memory.write(this.systemSP, this.regPC);
-      this.systemSP--;
-      this.memory.write(this.systemSP, this.regSP);
+      this.memory.write(this.systemSP--, this.regY);
+      this.memory.write(this.systemSP--, this.regX);
+      this.memory.write(this.systemSP--, this.regAC);
+      this.memory.write(this.systemSP--, this.regSP);
+      this.memory.write(this.systemSP--, this.regPC);
+
       //assign PC = 1000
       this.regPC = Utils.TIMER_INTERRUPT_ADDR;
+      this.regSP = this.systemSP;
+      if (memory.read(Utils.TIMER_INTERRUPT_ADDR) == 0) {
+        iret();
+//        this.regIR = Instruction.IRET;
+      }
     }
   }
 
@@ -336,6 +357,7 @@ public class CPU {
     Random rnd = new Random();
     int value = 1 + rnd.nextInt(100);
     regAC = value;
+    System.out.println("Random: " + value);
   }
 
   /**
@@ -474,7 +496,7 @@ public class CPU {
    */
   private void ret() {
     //read return address at sp
-    int returnAddress = memory.read(regSP++);
+    int returnAddress = memory.read(++regSP);
     //jump to the address
     regPC = returnAddress;
   }
@@ -508,7 +530,7 @@ public class CPU {
    */
   private void pop() {
     //read value at sp then assign value to ac
-    regAC = memory.read(regSP++);
+    regAC = memory.read(++regSP);
   }
 
   /**
@@ -523,8 +545,11 @@ public class CPU {
       //switch stack
       this.userSP = this.regSP;
       //push tmpSP, tmpPC to system stack
-      memory.write(this.systemSP--, this.regSP);
-      memory.write(this.systemSP--, this.regPC);
+      this.memory.write(this.systemSP--, this.regY);
+      this.memory.write(this.systemSP--, this.regX);
+      this.memory.write(this.systemSP--, this.regAC);
+      this.memory.write(this.systemSP--, this.regSP);
+      this.memory.write(this.systemSP--, this.regPC);
       //set new sp, pc
       regPC = Utils.SYSTEM_INTERRUPT_ADDR;
       regSP = this.systemSP;
@@ -540,8 +565,11 @@ public class CPU {
     //switch stack
     this.systemSP = this.regSP;
     //pop from stack into sp, pc
-    regPC = memory.read(this.systemSP++);
-    regSP = memory.read(this.systemSP++);
+    regPC = memory.read(++this.systemSP);
+    regSP = memory.read(++this.systemSP);
+    regAC = memory.read(++this.systemSP);
+    regX = memory.read(++this.systemSP);
+    regY = memory.read(++this.systemSP);
     //set user mode
     switchMode();
   }
@@ -569,5 +597,86 @@ public class CPU {
    */
   private void printCharacter(int data) {
     System.out.println(Character.toChars(data));
+  }
+
+  private void printErrorIndexOutOfRange() {
+    int[] message = {
+      1, 73, // I
+      9, 2,
+      1, 110, // n
+      9, 2,
+      1, 118, // v
+      9, 2,
+      1, 97, // a
+      9, 2,
+      1, 108, // l
+      9, 2,
+      1, 105, // i
+      9, 2,
+      1, 100, // d
+      9, 2,
+      1, 32, // _
+      9, 2,
+      1, 105, // i
+      9, 2,
+      1, 110, // n
+      9, 2,
+      1, 100, // d
+      9, 2,
+      1, 101, // e
+      9, 2,
+      1, 120, // x
+      9, 2,
+      1, 33, // !
+      9, 2,
+      1, 10, // \n
+      9, 2,
+      50 // END program
+    };
+    printMessage(message);
+  }
+
+  private void printErrorIllegalAccess() {
+    int[] message = {
+      1, 65, // A
+      9, 2,
+      1, 99, // c
+      9, 2,
+      1, 99, // c
+      9, 2,
+      1, 101, // e
+      9, 2,
+      1, 115, // s
+      9, 2,
+      1, 115, // s
+      9, 2,
+      1, 32, // _
+      9, 2,
+      1, 101, // e
+      9, 2,
+      1, 114, // r
+      9, 2,
+      1, 114, // r
+      9, 2,
+      1, 111, // o
+      9, 2,
+      1, 114, // r
+      9, 2,
+      1, 33, // !
+      9, 2,
+      1, 10, // \n
+      9, 2,
+      50 // End program!
+    };
+    printMessage(message);
+  }
+
+  private void printMessage(int[] instructions) {
+    switchMode();
+    for (int i = 0; i < instructions.length; i++) {
+      memory.write(Utils.SYSTEM_INTERRUPT_ADDR + i, instructions[i]);
+    }
+    regIR = Instruction.INT;
+    executeInstruction();
   }
 }

@@ -99,6 +99,96 @@ public class CPU {
     //set system mode
   }
 
+  
+
+  /**
+   * Load the value into the AC
+   */
+  private void loadValue() {
+    regAC = memory.read(regPC++);
+  }
+
+  /**
+   * Load the value at the address into the AC.
+   */
+  private void loadAddr() {
+    int address = memory.read(regPC++);
+    regAC = memory.read(address);
+  }
+
+  /**
+   * Load the value from the address found in the given address into the AC (for example, if LoadInd
+   * 500, and 500 contains 100, then load from 100).
+   *
+   */
+  private void loadIndAddr() {
+    int value = memory.read(regPC++);
+    int address = memory.read(value);
+    regAC = memory.read(address);
+  }
+
+  /**
+   * Load the value at (address+X) into the AC (for example, if LoadIdxX 500, and X contains 10,
+   * then load from 510).
+   *
+   */
+  private void loadIdxXAddr() {
+    int address = memory.read(regPC++);
+    regAC = memory.read(address + regX);
+  }
+
+  /**
+   * Load the value at (address+Y) into the AC
+   */
+  private void loadIdxYAddr() {
+    int address = memory.read(regPC++);
+    regAC = memory.read(address + regY);
+  }
+
+  /**
+   * Load from (Sp+X) into the AC
+   */
+  private void loadSpX() {
+    regAC = memory.read(regSP + regX);
+  }
+
+  /**
+   * Store the value in the AC into the address
+   */
+  private void storeAddr() {
+    int address = memory.read(regPC++);
+    memory.write(address, regAC);
+  }
+
+  /**
+   * Gets a random int from 1 to 100 into the AC
+   */
+  private void get() {
+    Random rnd = new Random();
+    int value = 1 + rnd.nextInt(100);
+    regAC = value;
+  }
+
+  /**
+   * If port=1, writes AC as an int to the screen <br>
+   * If port=2, writes AC as a char to the screen
+   */
+  private void put() {
+    int port = memory.read(regPC++);
+    if (port == 1) {
+      printNumber(regAC);
+    } else if (port == 2) {
+      printCharacter(regAC);
+    }
+  }
+
+  /**
+   * Add the value in X to the AC
+   */
+  private void addX() {
+    regAC += regX;
+  }
+
   /**
    * 21. Jump to the address only if the value in the AC is zero
    */
@@ -209,7 +299,7 @@ public class CPU {
     //set user mode
     switchMode();
   }
-
+  
   /**
    * 50. End execution
    */

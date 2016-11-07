@@ -62,9 +62,9 @@ public class CPU {
    * function run User program at address 0
    */
   public void run() {
-      // declare 'count' variable store number of instruction is executed
+    // declare 'count' variable store number of instruction is executed
 
-      // loop instructions from user memory
+    // loop instructions from user memory
     // load instruction by using fetchIR() function
     // increase value of PC register by 1 unit
     // execute instruction
@@ -122,6 +122,15 @@ public class CPU {
     //assign cp = 1000
     //get sp from system stack
     //set system mode
+  }
+
+  /**
+   * Set timer for interrupt.
+   *
+   * @param value timer value.
+   */
+  public void setTimer(int value) {
+    this.timer = value;
   }
 
   /**

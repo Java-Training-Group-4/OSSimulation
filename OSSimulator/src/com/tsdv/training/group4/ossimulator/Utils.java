@@ -12,7 +12,7 @@ public class Utils {
     /**
      * Start index of User memory zone.
      */
-    public static int USER_MEMORY_SIZE_INDEX = 999;
+    public static int USER_MEMORY_INDEX = 999;
     /**
      * Working mode of CPU - User mode.
      */

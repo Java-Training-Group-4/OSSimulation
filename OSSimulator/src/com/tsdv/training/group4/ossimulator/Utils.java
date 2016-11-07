@@ -31,7 +31,14 @@ public class Utils {
     public static int SYSTEM_INTERRUPT_ADDR = 1500;
     
     /**
-     * de
+     * Start point index of User stack
      */
-    public static final String NAME_DELIMITER = " ";
+    public static int START_USER_STACK_INDEX = 999;
+    
+    /**
+     * Start point index of System stack
+     */
+    public static int START_SYSTEM_STACK_INDEX = 1999;
+    
+    
 }

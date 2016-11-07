@@ -48,13 +48,30 @@ public class CPU {
    * Constructor function
    */
   public CPU() {
+    this.isInterrupt = false;
+    this.memory = new Memory();
+    this.regAC = 0;
+    this.regIR = 0;
+    this.regPC = 0;
+    this.regSP = 0;
+    this.regX = 0;
+    this.regY = 0;
   }
 
   /**
    * function run User program at address 0
    */
   public void run() {
-    throw new UnsupportedOperationException();
+      // declare 'count' variable store number of instruction is executed
+
+      // loop instructions from user memory
+    // load instruction by using fetchIR() function
+    // increase value of PC register by 1 unit
+    // execute instruction
+    /**
+     * check count == timer If yes, switch mode to SYSTEM_MODE, set isInterrupt = true and call
+     * interrupt() function
+     */
   }
 
   /**
@@ -63,14 +80,16 @@ public class CPU {
    * @param mem Memory of OS
    */
   public void initialize(int[] mem) {
-    throw new UnsupportedOperationException();
+    // call initialize() function of memory
   }
 
   /**
    * function switch mode User stack to System stack and reverse
    */
   public void switchMode() {
-    throw new UnsupportedOperationException();
+    /**
+     * check mode == USER_MODE switch to SYSTEM_MODE or reverse
+     */
   }
 
   /**
@@ -78,14 +97,20 @@ public class CPU {
    * @return Instruction code
    */
   public int fetchIR() {
-    throw new UnsupportedOperationException();
+    /**
+     * get instruction from User memory with PC index
+     */
+
+    return 0;
   }
 
   /**
    * function execute instruction
    */
   public void executeInstruction() {
-    throw new UnsupportedOperationException();
+    /**
+     * switch case: call corresponding function
+     */
   }
 
   /**
@@ -98,8 +123,6 @@ public class CPU {
     //get sp from system stack
     //set system mode
   }
-
-  
 
   /**
    * Load the value into the AC
@@ -190,6 +213,77 @@ public class CPU {
   }
 
   /**
+   * function for instruction 11 - Add the value in Y to the AC
+   */
+  private void addY() {
+    this.regAC += this.regY;
+  }
+
+  /**
+   * function for instruction 12 - Subtract the value in X from the AC
+   */
+  private void subX() {
+    this.regAC -= this.regX;
+  }
+
+  /**
+   * function for instruction 13 - Subtract the value in Y from the AC
+   */
+  private void subY() {
+    this.regAC -= this.regY;
+  }
+
+  /**
+   * function for instruction 14 - Copy the value in the AC to X
+   */
+  private void copyToX() {
+    this.regX = this.regAC;
+  }
+
+  /**
+   * function for instruction 15 - Copy the value in X to the AC
+   */
+  private void copyFromX() {
+    this.regAC = this.regX;
+  }
+
+  /**
+   * function for instruction 16 - Copy the value in the AC to Y
+   */
+  private void copyToY() {
+    this.regY = this.regAC;
+  }
+
+  /**
+   * function for instruction 17 - Copy the value in Y to the AC
+   */
+  private void copyFromY() {
+    this.regAC = this.regY;
+  }
+
+  /**
+   * function for instruction 18 - Copy the value in AC to the SP
+   */
+  private void copyToSp() {
+    this.regSP = this.regAC;
+  }
+
+  /**
+   * function for instruction 19 - Copy the value in SP to the AC
+   */
+  private void copyFromSp() {
+    this.regAC = this.regSP;
+  }
+
+  /**
+   * function for instruction 15 - Jump to the address
+   */
+  private void jumpAddress() {
+    int currentAddr = this.regPC;
+    this.regPC = this.memory.read(currentAddr);
+  }
+
+  /**
    * 21. Jump to the address only if the value in the AC is zero
    */
   private void jumpIfEquealAddr() {
@@ -208,11 +302,11 @@ public class CPU {
    */
   private void jumpIfNotEquealAddr() {
     //if ac != 0 then read address at pc and pc = address
-    if(regAC != 0){
+    if (regAC != 0) {
       int address = memory.read(regPC++);
       regPC = address;
-    }else{
-    //else pc++
+    } else {
+      //else pc++
       regPC++;
     }
   }
@@ -299,7 +393,7 @@ public class CPU {
     //set user mode
     switchMode();
   }
-  
+
   /**
    * 50. End execution
    */

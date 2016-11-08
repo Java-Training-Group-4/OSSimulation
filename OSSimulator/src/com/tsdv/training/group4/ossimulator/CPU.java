@@ -244,11 +244,9 @@ public class CPU {
     } catch (IllegalAccessError ex) {
       //print "Invalid access to memory"
       printErrorIllegalAccess();
-      end();
     } catch (IndexOutOfBoundsException ex) {
       //print "Index out of range"
       printErrorIndexOutOfRange();
-      end();
     }
   }
 
@@ -587,7 +585,7 @@ public class CPU {
    * @param data number
    */
   private void printNumber(int data) {
-    System.out.println(data);
+    System.out.print(data);
   }
 
   /**
@@ -596,7 +594,7 @@ public class CPU {
    * @param data number
    */
   private void printCharacter(int data) {
-    System.out.println(Character.toChars(data));
+    System.out.print(Character.toChars(data));
   }
 
   private void printErrorIndexOutOfRange() {
@@ -672,11 +670,13 @@ public class CPU {
   }
 
   private void printMessage(int[] instructions) {
-    switchMode();
+    //call system interrupt
+    intSystem();
+    //write message to system interrupt memory 
     for (int i = 0; i < instructions.length; i++) {
       memory.write(Utils.SYSTEM_INTERRUPT_ADDR + i, instructions[i]);
     }
-    regIR = Instruction.INT;
-    executeInstruction();
+    //execute
+    run();
   }
 }

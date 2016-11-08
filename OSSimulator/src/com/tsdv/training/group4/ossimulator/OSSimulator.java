@@ -26,7 +26,7 @@ public class OSSimulator {
 //      verifyInputParameters(args);
       // Get parameters
 //      String programFile = args[0];
-      String programFile = "data/program5.txt";
+      String programFile = "data/program4.txt";
       //load program
       int[] memory = loadProgram(programFile);
       // Get timer

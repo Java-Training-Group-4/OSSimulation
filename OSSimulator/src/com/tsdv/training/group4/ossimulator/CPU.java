@@ -32,18 +32,23 @@ public class CPU {
    */
   private int regY;
   /**
-   * number of instruction for a timer.
+   * number of instruction for a timer
    */
   private int timer;
   /**
-   * flag for interrupt processing
+   * flag for intTimer processing
    */
-  private boolean isInterrupt;
+  private boolean interrupt;
 
   /**
    * flag for ending program
    */
-  private boolean isTerminate;
+  private boolean terminate;
+
+  /**
+   * random object
+   */
+  Random rnd = new Random();
 
   /**
    * Memory of OS
@@ -64,16 +69,16 @@ public class CPU {
    * Constructor function
    */
   public CPU() {
-    this.isInterrupt = false;
+    this.interrupt = false;
     this.memory = new Memory();
+    this.userSP = Utils.START_USER_STACK_INDEX;
+    this.systemSP = Utils.START_SYSTEM_STACK_INDEX;
     this.regAC = 0;
     this.regIR = 0;
     this.regPC = 0;
-    this.regSP = Utils.START_USER_STACK_INDEX;
+    this.regSP = userSP;
     this.regX = 0;
     this.regY = 0;
-    this.userSP = Utils.START_USER_STACK_INDEX;
-    this.systemSP = Utils.START_SYSTEM_STACK_INDEX;
   }
 
   /**
@@ -83,20 +88,22 @@ public class CPU {
     // declare 'count' variable store number of instruction is executed
     int count = 0;
     // loop instructions from user memory
-    while (!isTerminate) {
+    while (!isTerminate()) {
       // load instruction by using fetchIR() function
       fetchIR();
-      if (!isInterrupt) {
+
+      //increase count if user program processing
+      if (!isInterrupt()) {
         count++;
       }
       // execute instruction
       executeInstruction();
-      /**
-       * check count == timer If yes, switch mode to SYSTEM_MODE, set isInterrupt = true and call
-       * interrupt() function
+
+      /* check count == timer If yes, switch mode to SYSTEM_MODE, set isInterrupt = true and call
+       * intTimer() function
        */
       if (count == this.timer) {
-        interrupt();
+        intTimer();
         count = 0;
       }
     }
@@ -116,14 +123,10 @@ public class CPU {
    * function switch mode User stack to System stack and reverse
    */
   public void switchMode() {
-    /**
+    /*
      * check mode == USER_MODE switch to SYSTEM_MODE or reverse
      */
-    if (this.memory.getMode() == Utils.USER_MODE) {
-      this.memory.setMode(Utils.SYSTEM_MODE);
-    } else if (this.memory.getMode() == Utils.SYSTEM_MODE) {
-      this.memory.setMode(Utils.USER_MODE);
-    }
+    memory.switchMode();
   }
 
   /**
@@ -131,7 +134,7 @@ public class CPU {
    * function fetch instruction into register IR
    */
   public void fetchIR() {
-    /**
+    /*
      * get instruction from User memory with PC index
      */
     this.regIR = this.memory.read(this.regPC++);
@@ -141,9 +144,8 @@ public class CPU {
    * function execute instruction
    */
   public void executeInstruction() {
-    /**
-     * switch case: call corresponding function
-     */
+
+    // switch case: call corresponding function
     try {
       switch (this.regIR) {
         case Instruction.LOAD_VALUE:
@@ -243,45 +245,65 @@ public class CPU {
       }
     } catch (IllegalAccessError ex) {
       //print "Invalid access to memory"
-      printErrorIllegalAccess();
+      printMessage(Utils.MESSAGE_ILLEGAL_ACCESS);
     } catch (IndexOutOfBoundsException ex) {
       //print "Index out of range"
-      printErrorIndexOutOfRange();
+      printMessage(Utils.MESSAGE_OUT_OF_RANGE);
     }
   }
 
   /**
-   * function interrupt processing
+   * function intTimer processing
    */
-  public void interrupt() {
+  public void intTimer() {
+    // check other intTimer is enabled
+    if (!isInterrupt()) {
+      // set interrupt = true
+      setInterrupt(true);
 
-    // check other interrupt is enabled
-    if (!this.isInterrupt) {
-      // set isInterrupt = true
-      this.isInterrupt = true;
       //set system mode
       switchMode();
       // switch stack
-      this.userSP = this.regSP;
+      switchToSystemStack();
       //store PC,SP to system stack
-      this.memory.write(this.systemSP--, this.regY);
-      this.memory.write(this.systemSP--, this.regX);
-      this.memory.write(this.systemSP--, this.regAC);
-      this.memory.write(this.systemSP--, this.regSP);
-      this.memory.write(this.systemSP--, this.regPC);
+      systemSP = storeRegister(systemSP);
 
-      //assign PC = 1000
-      this.regPC = Utils.TIMER_INTERRUPT_ADDR;
-      this.regSP = this.systemSP;
+      //set new sp, pc
+      setNewPcSPRegister(Utils.TIMER_INTERRUPT_ADDR, systemSP);
+
+      //check timer program
       if (memory.read(Utils.TIMER_INTERRUPT_ADDR) == 0) {
         iret();
-//        this.regIR = Instruction.IRET;
       }
     }
   }
 
   /**
-   * Set timer for interrupt.
+   * switch to system stack
+   */
+  private void switchToSystemStack() {
+    //save current stack point for user stack point
+    userSP = this.regSP;
+  }
+
+  /**
+   * store register to stack
+   *
+   * @param stackPoint stack point of stack
+   * @return stack point after store register
+   */
+  private int storeRegister(int stackPoint) {
+    this.memory.write(stackPoint--, this.regY);
+    this.memory.write(stackPoint--, this.regX);
+    this.memory.write(stackPoint--, this.regAC);
+    this.memory.write(stackPoint--, this.regSP);
+    this.memory.write(stackPoint--, this.regPC);
+
+    return stackPoint;
+  }
+
+  /**
+   * Set timer for intTimer.
    *
    * @param value timer value.
    */
@@ -352,10 +374,8 @@ public class CPU {
    * Gets a random int from 1 to 100 into the AC
    */
   private void get() {
-    Random rnd = new Random();
     int value = 1 + rnd.nextInt(100);
     regAC = value;
-    System.out.println("Random: " + value);
   }
 
   /**
@@ -535,48 +555,82 @@ public class CPU {
    * 29. Set system mode, switch stack, push SP and PC, set new SP and PC
    */
   private void intSystem() {
-    if (!this.isInterrupt) {
-      // set isInterrupt = true
-      this.isInterrupt = true;
+    if (!isInterrupt()) {
+      // set interrupt = true
+      setInterrupt(true);
+
       //set system mode
       switchMode();
       //switch stack
-      this.userSP = this.regSP;
+      switchToSystemStack();
       //push tmpSP, tmpPC to system stack
-      this.memory.write(this.systemSP--, this.regY);
-      this.memory.write(this.systemSP--, this.regX);
-      this.memory.write(this.systemSP--, this.regAC);
-      this.memory.write(this.systemSP--, this.regSP);
-      this.memory.write(this.systemSP--, this.regPC);
+      systemSP = storeRegister(systemSP);
+
       //set new sp, pc
-      regPC = Utils.SYSTEM_INTERRUPT_ADDR;
-      regSP = this.systemSP;
+      setNewPcSPRegister(Utils.SYSTEM_INTERRUPT_ADDR, systemSP);
+
+      //check timer program
+      if (memory.read(Utils.SYSTEM_INTERRUPT_ADDR) == 0) {
+        iret();
+      }
     }
+  }
+
+  /**
+   * reset value for PC, SP registers
+   *
+   * @param pc PC register
+   * @param sp SP register
+   */
+  private void setNewPcSPRegister(int pc, int sp) {
+    regPC = pc;
+    regSP = sp;
   }
 
   /**
    * 30. Restore registers, set user mode
    */
   private void iret() {
-    // set isInterrupt = false
-    this.isInterrupt = false;
+    // set interrupt = false
+    setInterrupt(false);
+
     //switch stack
-    this.systemSP = this.regSP;
+    switchToUserStack();
     //pop from stack into sp, pc
-    regPC = memory.read(++this.systemSP);
-    regSP = memory.read(++this.systemSP);
-    regAC = memory.read(++this.systemSP);
-    regX = memory.read(++this.systemSP);
-    regY = memory.read(++this.systemSP);
+    systemSP = restoreRegisterFromStack(systemSP);
     //set user mode
     switchMode();
+  }
+
+  /**
+   * switch to user stack
+   */
+  private void switchToUserStack() {
+    //save current stack point to system stack point
+    this.systemSP = this.regSP;
+  }
+
+  /**
+   * restore register from stack
+   *
+   * @param stackPoint stack point of current stack
+   * @return stack point after restore
+   */
+  private int restoreRegisterFromStack(int stackPoint) {
+    regPC = memory.read(++stackPoint);
+    regSP = memory.read(++stackPoint);
+    regAC = memory.read(++stackPoint);
+    regX = memory.read(++stackPoint);
+    regY = memory.read(++stackPoint);
+
+    return stackPoint;
   }
 
   /**
    * 50. End execution
    */
   private void end() {
-    this.isTerminate = true;
+    setTerminate(true);
   }
 
   /**
@@ -597,86 +651,58 @@ public class CPU {
     System.out.print(Character.toChars(data));
   }
 
-  private void printErrorIndexOutOfRange() {
-    int[] message = {
-      1, 73, // I
-      9, 2,
-      1, 110, // n
-      9, 2,
-      1, 118, // v
-      9, 2,
-      1, 97, // a
-      9, 2,
-      1, 108, // l
-      9, 2,
-      1, 105, // i
-      9, 2,
-      1, 100, // d
-      9, 2,
-      1, 32, // _
-      9, 2,
-      1, 105, // i
-      9, 2,
-      1, 110, // n
-      9, 2,
-      1, 100, // d
-      9, 2,
-      1, 101, // e
-      9, 2,
-      1, 120, // x
-      9, 2,
-      1, 33, // !
-      9, 2,
-      1, 10, // \n
-      9, 2,
-      50 // END program
-    };
-    printMessage(message);
-  }
-
-  private void printErrorIllegalAccess() {
-    int[] message = {
-      1, 65, // A
-      9, 2,
-      1, 99, // c
-      9, 2,
-      1, 99, // c
-      9, 2,
-      1, 101, // e
-      9, 2,
-      1, 115, // s
-      9, 2,
-      1, 115, // s
-      9, 2,
-      1, 32, // _
-      9, 2,
-      1, 101, // e
-      9, 2,
-      1, 114, // r
-      9, 2,
-      1, 114, // r
-      9, 2,
-      1, 111, // o
-      9, 2,
-      1, 114, // r
-      9, 2,
-      1, 33, // !
-      9, 2,
-      1, 10, // \n
-      9, 2,
-      50 // End program!
-    };
-    printMessage(message);
-  }
-
+  /**
+   * print message following instructions array
+   *
+   * @param instructions include message encode
+   */
   private void printMessage(int[] instructions) {
-    //call system interrupt
+    //write system intTimer program
+    writeInterruptProgram(Utils.SYSTEM_INTERRUPT_ADDR, instructions);
+    //call system intTimer
     intSystem();
-    //write message to system interrupt memory 
-    for (int i = 0; i < instructions.length; i++) {
-      memory.write(Utils.SYSTEM_INTERRUPT_ADDR + i, instructions[i]);
-    }
     //execute
     run();
+  }
+
+  /**
+   * write interrupt program to system memory
+   *
+   * @param interruptAddr interrupt address
+   * @param instructions interrupt program
+   */
+  private void writeInterruptProgram(int interruptAddr, int[] instructions) {
+    //switch to system mode to write intTimer program if current mode is user mode
+    boolean isSwitch = false;
+    if (memory.getMode() == Utils.USER_MODE) {
+      switchMode();
+      isSwitch = true;
+    }
+
+    //write message to system intTimer memory 
+    for (int i = 0; i < instructions.length; i++) {
+      memory.write(interruptAddr + i, instructions[i]);
+    }
+
+    //switch to mode before call this function
+    if (isSwitch) {
+      switchMode();
+    }
+  }
+
+  public void setInterrupt(boolean interrupt) {
+    this.interrupt = interrupt;
+  }
+
+  public boolean isInterrupt() {
+    return interrupt;
+  }
+
+  public void setTerminate(boolean terminate) {
+    this.terminate = terminate;
+  }
+
+  public boolean isTerminate() {
+    return terminate;
   }
 }

@@ -5,74 +5,101 @@ package com.tsdv.training.group4.ossimulator;
  */
 public class Memory {
 
-    /**
-     * Array store instructions to be executed.
-     */
-    private int[] mem;
-    /**
-     * <ol>Working mode of Memory. There are 2 types:<ol>
-     * <li>User mode</li>
-     * <li>System mode</li>
-     */
-    private int mode;
+  /**
+   * Array store instructions to be executed.
+   */
+  private int[] mem;
+  /**
+   * <ol>Working mode of Memory. There are 2 types:<ol>
+   * <li>User mode</li>
+   * <li>System mode</li>
+   */
+  private int mode;
 
-    /**
-     * Default constructor.
-     */
-    public Memory() {
+  /**
+   * Default constructor.
+   */
+  public Memory() {
+    this.mem = new int[Utils.MEMORY_SIZE];
+    this.mode = Utils.USER_MODE;
+  }
 
+  /**
+   * Initialize memory.
+   *
+   * @param mem memory with instructions.
+   */
+  public void initialize(int[] mem) {
+    //
+    if (mem == null) {
+      throw new IllegalArgumentException("Memory is null");
     }
-
-    /**
-     * Initialize memory.
-     *
-     * @param mem memory with instructions.
-     */
-    public void initialize(int[] mem) {
-        throw new UnsupportedOperationException();
+    if (mem.length < Utils.MEMORY_SIZE) {
+      throw new IllegalArgumentException("Does not meet minimum requirement of memory");
     }
-
-    /**
-     * Read value at address.
-     *
-     * @param address address
-     * @return value.
-     */
-    public int read(int address) {
-        throw new UnsupportedOperationException();
+    if (mem.length > Utils.MEMORY_SIZE) {
+      throw new IllegalArgumentException("Exceed maximum memory");
     }
+    this.mem = mem;
+  }
 
-    /**
-     * Write data to memory.
-     *
-     * @param address address
-     * @param data data value.
-     */
-    public void write(int address, int data) {
-        throw new UnsupportedOperationException();
+  /**
+   * Read value at address.
+   *
+   * @param address address
+   * @return value.
+   */
+  public int read(int address) {
+    if (address < 0 || address >= Utils.MEMORY_SIZE) {
+      throw new IndexOutOfBoundsException("Out of index: " + address);
     }
+    if (mode == Utils.USER_MODE && address > Utils.USER_MEMORY_INDEX) {
+      throw new IllegalAccessError();
+    }
+    return mem[address];
+  }
 
-    /**
-     * Switch between user mode and system mode.
-     */
-    public void switchMode() {
-        throw new UnsupportedOperationException();
+  /**
+   * Write data to memory.
+   *
+   * @param address address
+   * @param data data value.
+   */
+  public void write(int address, int data) {
+    if (address < 0 || address >= Utils.MEMORY_SIZE) {
+      throw new IndexOutOfBoundsException("Out of index: " + address);
     }
+    if (mode == Utils.USER_MODE && address > Utils.USER_MEMORY_INDEX) {
+      throw new IllegalAccessError();
+    }
+    this.mem[address] = data;
+  }
 
-    public int[] getMem() {
-        return mem;
+  /**
+   * Switch between user mode and system mode.
+   */
+  public void switchMode() {
+    if (mode == Utils.USER_MODE) {
+      mode = Utils.SYSTEM_MODE;
+    } else {
+      mode = Utils.USER_MODE;
     }
+  }
 
-    public int getMode() {
-        return mode;
-    }
+  public int[] getMem() {
+    return mem;
+  }
 
-    public void setMem(int[] mem) {
-        this.mem = mem;
-    }
+  public int getMode() {
+    return mode;
+  }
 
-    public void setMode(int mode) {
-        this.mode = mode;
-    }
+  public void setMem(int[] mem) {
+    this.mem = mem;
+  }
+
+  public void setMode(int mode) {
+    this.mode = mode;
+  }
 
 }
